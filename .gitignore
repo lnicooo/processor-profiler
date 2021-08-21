@@ -1,0 +1,15 @@
+.DS_Store
+.idea
+*.log
+*.elf
+harness/obj/
+*.exe
+*.o
+*.so
+tmp/
+*.out
+O0/
+O2/
+test/
+test_O0/
+test_O2/
