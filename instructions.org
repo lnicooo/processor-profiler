@@ -1,0 +1,6 @@
+#+TITLE:
+
+[['and','or','xor','andi','ori','xori','sll','srl','sra','slli','srli','srai','add','sub','addi','mul','div','rem'],
+['j','jr','jal','jarl','ret','ecal','mret'],
+['slt','slti','sltu','seqz','snez','sltz','sgtz','beq','bne','blt','bltu','bge','bgeu','bgt','bgtu','ble','bleu','beqz','bnez'],
+['lw','lh','lhu','lb','lbu','sw','sh','sb','li','la','lui','mv','lhu']]
