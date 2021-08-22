@@ -17,6 +17,7 @@ parser = OptionParser()
 
 parser.add_option("--instructions",     action="store_true", dest="instructionsprofile",    help="table uahhuh")
 parser.add_option("--instructionsplot", action="store_true", dest="plotinstructionsprofile",help="Plot uahhuh")
+parser.add_option("--registers",        action="store_true", dest="registersprofile",       help="print registers")
 
 parser.add_option("--disassemblyfile",  action="append", type="string", dest="disassembly")
 
@@ -114,6 +115,30 @@ def instructionsProfile(disassemblyfile, instrClassifier):
 
     return classification
 
+def registerProfile(disassemblyfile):
+    data=[]
+
+    with open(disassemblyfile , 'r') as f:
+        reg_read=[]
+        reg_write=[]
+        for line in f:
+
+            line=line.split()
+            register=[]
+            if(len(line)>2):
+                register=re.findall("[tsa]\d{1,2}|ra|[sgt][p]",line[2])
+            if(len(register)>1):
+                reg_write.append(register[0])
+            if(len(register)>2):
+                for x in register[1:]:
+                    reg_read.append(x)
+
+    writes=list(Counter(reg_write).items())
+
+    reads=list(Counter(reg_read).items())
+
+    return writes,reads
+
 if options.instructionsprofile:
 
     applications = readFolder(options.disassemblyfolder)
@@ -164,3 +189,16 @@ if options.plotinstructionsprofile:
     makeSpider(classifier, values, "Hello")
 
     plt.show()
+
+if options.registersprofile:
+
+    applications = readFolder(options.disassemblyfolder)
+
+    table = optn("{0}.csv".format(options.outputfile),"w")
+
+    head=""
+
+    table.write(head)
+
+    for application in applications:
+        writes,reads = registerProfile(application)
