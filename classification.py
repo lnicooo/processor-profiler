@@ -33,6 +33,8 @@ AUCD = [['and','or','xor','andi','ori','xori','sll','srl','sra','slli','srli','s
 ['slt','slti','sltu','seqz','snez','sltz','sgtz','srai','beq','bne','blt','bltu','bge','bgeu','bgt','bgtu','ble','bleu','beqz','bnez','bltz','blez','bgez','bgtz'],
 ['lw','lh','lhu','lb','lbu','sw','sh','sb','li','la','lui','mv','lhu']]
 
+rv_registers = ["ra","sp","gp","tp","t0","t1","t2","s0","s1","a0","a1","a2","a3","a4","a5","a6","a7","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","t5","t6","pc"]
+
 classAUCD = ['Arithmetic','Unconditional','Conditional','Data']
 
 
@@ -126,7 +128,7 @@ def registerProfile(disassemblyfile):
             line=line.split()
             register=[]
             if(len(line)>2):
-                register=re.findall("[tsa]\d{1,2}|ra|[sgt][p]",line[2])
+                register=re.findall("[tsa]\d[0-1]*|ra|[sgt][p]",line[2])
             if(len(register)>1):
                 reg_write.append(register[0])
             if(len(register)>2):
@@ -135,7 +137,11 @@ def registerProfile(disassemblyfile):
 
     writes=list(Counter(reg_write).items())
 
+    writes=[str(x[0]) for x in writes]
+
     reads=list(Counter(reg_read).items())
+
+    reads=[str(x[0]) for x in reads]
 
     return writes,reads
 
@@ -194,11 +200,23 @@ if options.registersprofile:
 
     applications = readFolder(options.disassemblyfolder)
 
-    table = optn("{0}.csv".format(options.outputfile),"w")
+    table = open("{0}.csv".format(options.outputfile),"w")
 
-    head=""
+    head="Application, Nº Registers, Registers\n"
 
     table.write(head)
 
     for application in applications:
         writes,reads = registerProfile(application)
+        applicationName =  application.split('/')[1][:-4]
+
+        writes = set(writes)
+        writes.update(set(reads))
+
+        registers = writes.intersection(set(rv_registers))
+
+        numregisters = len(registers)
+
+        applicationProfile = "{0},{1},{2}\n".format(applicationName,numregisters,registers)
+        print(applicationProfile)
+        table.write(applicationProfile)
