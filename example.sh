@@ -12,6 +12,7 @@ if [[ -z "$APPLICATION_LIST" ]]; then
 fi
 
 mkdir -p build
+mkdir -p elf
 cp application/Makefile build/.
 
 make  -C module
@@ -33,6 +34,7 @@ do
     #awk -f funcs.awk app.out | sort -nk2 -r > ${application}.out
 
     #rm app.out
+    cp build/*.elf elf/${application}.elf
     rm build/*.c build/*.elf
 
     echo -e "\e[1;32m ********************************* \e[0m"

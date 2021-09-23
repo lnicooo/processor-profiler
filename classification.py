@@ -18,6 +18,7 @@ parser = OptionParser()
 parser.add_option("--instructions",     action="store_true", dest="instructionsprofile",    help="table uahhuh")
 parser.add_option("--instructionsplot", action="store_true", dest="plotinstructionsprofile",help="Plot uahhuh")
 parser.add_option("--registers",        action="store_true", dest="registersprofile",       help="print registers")
+parser.add_option("--rw",        action="store_true", dest="readswrites",       help="print registers")
 
 parser.add_option("--disassemblyfile",  action="append", type="string", dest="disassembly")
 
@@ -170,6 +171,32 @@ if options.instructionsprofile:
         applicationProfile = "{0},{1}\n".format(applicationName,classification)
 
         table.write(applicationProfile)
+
+    sys.exit()
+
+if options.readswrites:
+
+    applications = readFolder(options.disassemblyfolder)
+    """
+    table = open("{0}.csv".format(options.outputfile),'w')
+
+    if(options.classifier == "AUCD"):
+        head=",".join(classAUCD)
+        classificator = AUCD
+    head+="\n"
+    table.write(head)
+    """
+
+    for application in applications:
+
+        data=[]
+        print(application)
+        with open(application , 'r') as f:
+           for line in f:
+               data.append(line.split())
+        instr=[x[1] for x in data]
+        instr_hist=list(Counter(instr).items())
+        print(instr_hist)
 
     sys.exit()
 
