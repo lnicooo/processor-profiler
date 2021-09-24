@@ -36,6 +36,9 @@ AUCD = [['and','or','xor','andi','ori','xori','sll','srl','sra','slli','srli','s
 
 rv_registers = ["ra","sp","gp","tp","t0","t1","t2","s0","s1","a0","a1","a2","a3","a4","a5","a6","a7","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","t5","t6","pc"]
 
+rv_loads = ['lw','lh','lhu','lb','lbu','li','la','lui','lhu']
+rv_writes = ['sw','sh','sb']
+
 classAUCD = ['Arithmetic','Unconditional','Conditional','Data']
 
 
@@ -177,27 +180,44 @@ if options.instructionsprofile:
 if options.readswrites:
 
     applications = readFolder(options.disassemblyfolder)
-    """
     table = open("{0}.csv".format(options.outputfile),'w')
-
+    """
     if(options.classifier == "AUCD"):
         head=",".join(classAUCD)
         classificator = AUCD
     head+="\n"
-    table.write(head)
     """
+    head = "Application, Reads, Writes\n"
+
+    table.write(head)
+
 
     for application in applications:
 
         data=[]
-        print(application)
+        read=0
+        write=0
+
         with open(application , 'r') as f:
            for line in f:
                data.append(line.split())
         instr=[x[1] for x in data]
         instr_hist=list(Counter(instr).items())
-        print(instr_hist)
+        for instr in instr_hist:
+            if(instr[0] in rv_loads):
+                read+=instr[1]
+            elif(instr[0] in rv_writes):
+                write+=instr[1]
+        #instr_sum = sum([x[1] for x in instr_hist])
+        rw_sum = read+write
 
+        reads  = str((read/rw_sum)*100)
+        writes = str((write/rw_sum)*100)
+
+        applicationName =  application.split('/')[1][:-4]
+
+        applicationRW = "{0},{1},{2}\n".format(applicationName,reads,writes)
+        table.write(applicationRW)
     sys.exit()
 
 if options.plotinstructionsprofile:
