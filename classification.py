@@ -11,6 +11,8 @@ import math
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+
 
 # -------------------------------- Options Parser ---------------------------------------- #
 parser = OptionParser()
@@ -18,13 +20,16 @@ parser = OptionParser()
 parser.add_option("--instructions",     action="store_true", dest="instructionsprofile",    help="table uahhuh")
 parser.add_option("--instructionsplot", action="store_true", dest="plotinstructionsprofile",help="Plot uahhuh")
 parser.add_option("--registers",        action="store_true", dest="registersprofile",       help="print registers")
-parser.add_option("--rw",        action="store_true", dest="readswrites",       help="print registers")
+parser.add_option("--rw",               action="store_true", dest="readswrites",            help="print registers")
+parser.add_option("--functionprofile",    action="store_true", dest="functionprofile",          help="Generate csv from iprof")
 
 parser.add_option("--disassemblyfile",  action="append", type="string", dest="disassembly")
 
 parser.add_option("--classifier"  ,     action="store", type="string", dest="classifier")
 parser.add_option("--outputfile",       action="store", type="string", dest="outputfile")
 parser.add_option("--disassemblyfolder",action="store", type="string", dest="disassemblyfolder")
+parser.add_option("--iprof",            action="store", type="string", dest="iproffile")
+
 # parse arguments
 (options, args) = parser.parse_args()
 
@@ -201,13 +206,17 @@ if options.readswrites:
         with open(application , 'r') as f:
            for line in f:
                data.append(line.split())
+
         instr=[x[1] for x in data]
         instr_hist=list(Counter(instr).items())
+
         for instr in instr_hist:
             if(instr[0] in rv_loads):
                 read+=instr[1]
+
             elif(instr[0] in rv_writes):
                 write+=instr[1]
+
         #instr_sum = sum([x[1] for x in instr_hist])
         rw_sum = read+write
 
@@ -267,3 +276,27 @@ if options.registersprofile:
         applicationProfile = "{0},{1},{2}\n".format(applicationName,numregisters,registers)
         print(applicationProfile)
         table.write(applicationProfile)
+
+if options.functionprofile:
+    df = pd.DataFrame(columns=['func','id','samp','perc','in','out'])
+
+    a=re.compile('^(?:FP:)(\d*) (\w*) (?:[^ ]*) (\d*) (\d*)$')
+    b=re.compile('^(?:FPC:)(\d*), (\d*), (\d*)$')
+
+    with open(options.iproffile) as f:
+        for line in f:
+            m_a=a.match(line)
+            m_b=b.match(line)
+            if(m_a):
+                x={'func':m_a.group(2), 'id':m_a.group(3),'samp':int(m_a.group(4)),'in':0}
+                df=df.append(x,ignore_index=True)
+
+            elif(m_b):
+                #print(m_b.group(3))
+                df.loc[df['id'] == m_b.group(3),['in']]+=int(m_b.group(1))
+
+                df['out']  = df['in'] - df['samp']
+                df['perc'] = (df['samp']/df['samp'].sum())*100
+                df = df.sort_values(by=['perc'],ascending=False)
+
+        df.to_csv(options.outputfile)
