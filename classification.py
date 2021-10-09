@@ -50,7 +50,7 @@ classAUCD = ['Arithmetic','Unconditional','Conditional','Data']
 def readFolder(folderName):
     files=[]
     for filename in os.listdir(folderName):
-        if re.match(".*out", filename) is not None:
+        if re.match(".*disas", filename) is not None:
             files.append(folderName+"/"+filename)
 
     files.sort()
@@ -278,6 +278,7 @@ if options.registersprofile:
         table.write(applicationProfile)
 
 if options.functionprofile:
+
     df = pd.DataFrame(columns=['func','id','samp','perc','in','out'])
 
     a=re.compile('^(?:FP:)(\d*) (\w*) (?:[^ ]*) (\d*) (\d*)$')
