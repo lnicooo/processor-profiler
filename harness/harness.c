@@ -79,7 +79,7 @@ int main(int argc, const char *argv[]) {
 
     while(!done) {
 
-        buf_count += sprintf(&file_buffer[buf_count],"%s\n",opProcessorDisassemble(processor, opProcessorPC(processor), OP_DSA_NORMAL));
+        buf_count += sprintf(&file_buffer[buf_count],"%x %s\n",opProcessorPC(processor),opProcessorDisassemble(processor, opProcessorPC(processor), OP_DSA_NORMAL));
 
         if(buf_count >= CHUNK){
             fwrite(file_buffer, CHUNK, 1, f);

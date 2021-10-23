@@ -21,9 +21,12 @@ parser.add_option("--instructions",     action="store_true", dest="instructionsp
 parser.add_option("--instructionsplot", action="store_true", dest="plotinstructionsprofile",help="Plot uahhuh")
 parser.add_option("--registers",        action="store_true", dest="registersprofile",       help="print registers")
 parser.add_option("--rw",               action="store_true", dest="readswrites",            help="print registers")
-parser.add_option("--functionprofile",    action="store_true", dest="functionprofile",          help="Generate csv from iprof")
+parser.add_option("--functionprofile1",    action="store_true", dest="functionprofile1",    help="Generate csv from iprof")
+parser.add_option("--functionprofile2",    action="store_true", dest="functionprofile2",    help="List executing function")
 
-parser.add_option("--disassemblyfile",  action="append", type="string", dest="disassembly")
+
+parser.add_option("--disassemblyfile",  action="append", type="string", dest="disassemblyfile")
+parser.add_option("--dumpfile",         action="store", type="string", dest="dumpfile")
 
 parser.add_option("--classifier"  ,     action="store", type="string", dest="classifier")
 parser.add_option("--outputfile",       action="store", type="string", dest="outputfile")
@@ -154,6 +157,8 @@ def registerProfile(disassemblyfile):
 
     return writes,reads
 
+
+
 if options.instructionsprofile:
 
     applications = readFolder(options.disassemblyfolder)
@@ -240,7 +245,7 @@ if options.plotinstructionsprofile:
         classificator = AUCD
         classifier = classAUCD
 
-    for application in options.disassembly:
+    for application in options.disassemblyfile:
 
         classification = instructionsProfile(application, classificator)
 
@@ -277,7 +282,7 @@ if options.registersprofile:
         print(applicationProfile)
         table.write(applicationProfile)
 
-if options.functionprofile:
+if options.functionprofile1:
 
     df = pd.DataFrame(columns=['func','id','samp','perc','in','out'])
 
@@ -301,3 +306,52 @@ if options.functionprofile:
                 df = df.sort_values(by=['perc'],ascending=False)
 
         df.to_csv(options.outputfile)
+
+if options.functionprofile2:
+
+    disas=[]
+    dump=[]
+
+    func_addr={}
+    func=""
+    disas_func={}
+
+    #Open disasembly file
+    with open(options.disassemblyfile[0], 'r') as f:
+        for line in f:
+
+            disas.append(line.split())
+
+    #Open dump file
+    with open(options.dumpfile, 'r') as f:
+        for line in f:
+            dump.append(line.split())
+
+    #Clean empty line
+    dump = list(filter(None,dump))
+    #Delete first 2 lines
+    dump = dump[2:]
+
+
+
+    for line in dump:
+        if(len(line)==2):
+            func = line[1]
+            func_addr[func]=[]
+        else:
+            func_addr[func].append(line[0][:-1])
+
+    for line in disas:
+        for func in func_addr:
+            addr= hex(int(line[0]))[2:]
+            if(addr in func_addr[func]):
+                break
+
+        func = func[1:-2]
+        if(func not in disas_func):
+            disas_func[func]=[]
+            disas_func[func].append(line[2:])
+        else:
+            disas_func[func].append(line[2:])
+
+    print(disas_func)

@@ -24,10 +24,21 @@ for line_dump in dump:
     else:
         func_addr[func].append(line_dump[0][:-1])
 
+disas_func={}
+
 for line in disas:
     for func in func_addr:
         addr= hex(int(line[0]))[2:]
         if(addr in func_addr[func]):
             break
+
+    func = func[1:-2]
+    if(func not in disas_func):
+        disas_func[func]=[]
+        disas_func[func].append(line[2:])
+    else:
+        disas_func[func].append(line[2:])
     print(line,func)
 
+print("===============")
+print(disas_func['_start'])
