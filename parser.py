@@ -8,6 +8,7 @@ a=re.compile('^(?:FP:)(\d*) (\w*) (?:[^ ]*) (\d*) (\d*)$')
 b=re.compile('^(?:FPC:)(\d*), (\d*), (\d*)$')
 
 with open("app.iprof") as f:
+
     for line in f:
         m_a=a.match(line)
         m_b=b.match(line)

@@ -315,6 +315,7 @@ if options.functionprofile2:
     func_addr={}
     func=""
     disas_func={}
+    carac_func={}
 
     #Open disasembly file
     with open(options.disassemblyfile[0], 'r') as f:
@@ -331,8 +332,6 @@ if options.functionprofile2:
     dump = list(filter(None,dump))
     #Delete first 2 lines
     dump = dump[2:]
-
-
 
     for line in dump:
         if(len(line)==2):
@@ -354,4 +353,3 @@ if options.functionprofile2:
         else:
             disas_func[func].append(line[2:])
 
-    print(disas_func)
