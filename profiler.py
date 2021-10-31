@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
 #
-
+#
 import re
+
+import pandas as pd
+import numpy  as np
+
 from collections import Counter
 
 class Instruction():
     def __init__(self, data, arch):
-        self.inst = [x[1] for x in data]
-        if(arch == "riscv"):
+        self.instr = [x[1] for x in data]
+        if(arch == 'riscv'):
             self.__arch_loads     = ['lw','lh','lhu','lb','lbu','li','la','lui','lhu']
             self.__arch_writes    = ['sw','sh','sb']
+            self.classAUCD        = ['Arithmetic','Unconditional','Conditional','Data']
+            self.__AUCD           = [['and','or','xor','andi','ori','xori','sll','srl','sra','slli','srli','srai','add','sub','addi','mul','div','rem','neg','not','sltiu'],
+                                     ['j','jr','jal','jalr','ret','ecall','mret','auipc'],
+                                     ['slt','slti','sltu','seqz','snez','sltz','sgtz','srai','beq','bne','blt','bltu','bge','bgeu','bgt','bgtu','ble','bleu','beqz','bnez','bltz','blez','bgez','bgtz'],
+                                     ['lw','lh','lhu','lb','lbu','sw','sh','sb','li','la','lui','mv','lhu']]
 
     def profile(self, instrClassifier):
 
@@ -34,10 +43,10 @@ class Instruction():
         instr_hist=list(Counter(self.instr).items())
 
         for instr in instr_hist:
-            if(instr[0] in rv_loads):
+            if(instr[0] in self.__arch_loads):
                 read+=instr[1]
 
-            elif(instr[0] in rv_writes):
+            elif(instr[0] in self.__arch_writes):
                 write+=instr[1]
 
         #instr_sum = sum([x[1] for x in instr_hist])
@@ -56,6 +65,7 @@ class Register():
         self.writes_usage = 0
         self.reads_usage  = 0
         self.reg_usage    = 0
+        self.reg_num      = 0
 
         if(arch == 'riscv'):
             self.arch_registers = ["ra","sp","gp","tp","t0","t1","t2","s0","s1","a0","a1","a2","a3","a4","a5","a6","a7","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","t5","t6","pc"]
@@ -111,9 +121,11 @@ class Register():
             if(len(regs_found)>1):
                 regs_hist.extend(regs_found)
 
-        num_reg = len(regs_hist)
-
         regs_hist=list(Counter(regs_hist).items())
+
+        num_reg = sum([x[1] for x in regs_hist])
+
+        self.reg_num = num_reg
 
         self.reg_usage = [(x[1]/num_reg)*100 for x in regs_hist]
 
@@ -149,3 +161,33 @@ class Function():
                     disas_func[func].append(line[2:])
                 else:
                     disas_func[func].append(line[2:])
+
+        return disas_func
+
+    def iprof(self, iprof):
+        #returns a dataframe
+        df = pd.DataFrame(columns=['func','id','samp','perc','in','out'])
+
+        a=re.compile('^(?:FP:)(\d*) (\w*) (?:[^ ]*) (\d*) (\d*)$')
+        b=re.compile('^(?:FPC:)(\d*), (\d*), (\d*)$')
+
+
+        for line in iprof:
+            m_a=a.match(line)
+            m_b=b.match(line)
+
+            if(m_a):
+                x={'func':m_a.group(2), 'id':m_a.group(3),'samp':int(m_a.group(4)),'in':0}
+                df=df.append(x,ignore_index=True)
+
+            elif(m_b):
+                #print(m_b.group(3))
+                df.loc[df['id'] == m_b.group(3),['in']]+=int(m_b.group(1))
+
+                df['out']  = df['in'] - df['samp']
+                df['perc'] = (df['samp']/df['samp'].sum())*100
+                df = df.sort_values(by=['perc'],ascending=False)
+
+        #df.to_csv(options.outputfile)
+
+        return df

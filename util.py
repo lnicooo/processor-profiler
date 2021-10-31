@@ -4,9 +4,10 @@ import re
 
 def readFolder(folder, extension):
     files=[]
+    extension = ".*"+extension
     for filename in os.listdir(folder):
         if re.match(extension, filename) is not None:
-            files.append(folderName+"/"+filename)
+            files.append(folder+"/"+filename)
 
     files.sort()
     return files
