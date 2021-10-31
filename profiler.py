@@ -10,12 +10,14 @@ from collections import Counter
 
 class Instruction():
     def __init__(self, data, arch):
-        self.instr = [x[1] for x in data]
+        self.data  = data
+        self.instr = [x[2] for x in data]
+        
         if(arch == 'riscv'):
-            self.__arch_loads     = ['lw','lh','lhu','lb','lbu','li','la','lui','lhu']
-            self.__arch_writes    = ['sw','sh','sb']
-            self.classAUCD        = ['Arithmetic','Unconditional','Conditional','Data']
-            self.__AUCD           = [['and','or','xor','andi','ori','xori','sll','srl','sra','slli','srli','srai','add','sub','addi','mul','div','rem','neg','not','sltiu'],
+            self.__arch_loads   = ['lw','lh','lhu','lb','lbu','li','la','lui','lhu']
+            self.__arch_writes  = ['sw','sh','sb']
+            self.classAUCD      = ['Arithmetic','Unconditional','Conditional','Data']
+            self.arch_AUCD      = [['and','or','xor','andi','ori','xori','sll','srl','sra','slli','srli','srai','add','sub','addi','mul','div','rem','neg','not','sltiu'],
                                      ['j','jr','jal','jalr','ret','ecall','mret','auipc'],
                                      ['slt','slti','sltu','seqz','snez','sltz','sgtz','srai','beq','bne','blt','bltu','bge','bgeu','bgt','bgtu','ble','bleu','beqz','bnez','bltz','blez','bgez','bgtz'],
                                      ['lw','lh','lhu','lb','lbu','sw','sh','sb','li','la','lui','mv','lhu']]
@@ -30,13 +32,32 @@ class Instruction():
             for index, instrclass in enumerate(instrClassifier):
                 if(instr[0] in instrclass):
                     classification[index]+=instr[1]
+                    break
+
+        classification = [(x/sum(classification))*100 for x in classification]
 
         return classification
 
+    def disassembly(self, instrClassifier):
+
+        classification = {}
+
+        for instrclass in self.classAUCD:
+            classification[instrclass] = []
+
+        for instr in self.data:
+            for index, instrclass in enumerate(instrClassifier):
+                if(instr[2] in instrclass):
+                    instrclass = self.classAUCD[index]
+                    classification[instrclass].append(instr)
+                    break
+
+        return classification
+    
     def readwrite(self):
 
         #returns percentage of reads and writes by executed data instructions
-
+        #
         read=0
         write=0
 

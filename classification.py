@@ -6,7 +6,7 @@ import os
 from optparse import OptionParser
 from util import *
 from profiler import *
-from graph import *
+from plot import *
 
 
 # -------------------------------- Options Parser ---------------------------------------- #
@@ -35,13 +35,13 @@ classAUCD = ['Arithmetic','Unconditional','Conditional','Data']
 
 if options.instructionsprofile:
 
-    applications = readFolder(options.disassemblyfolder, "out")
+    applications = readFolder(options.disassemblyfolder, "disas")
 
     table = open("{0}.csv".format(options.outputfile),'w')
 
     if(options.classifier == "AUCD"):
         head=",".join(classAUCD)
-        classificator = AUCD
+
     head+="\n"
     table.write(head)
 
@@ -51,11 +51,9 @@ if options.instructionsprofile:
 
         disas = Instruction(disas_f, 'riscv')
 
-        classifier = Instruction.classAUCD
+        classifier = disas.arch_AUCD
 
         classification = disas.profile(classifier)
-
-        classification = [(x/sum(classification))*100 for x in classification]
 
         classification = ",".join([str(x) for x in classification])
 
@@ -128,6 +126,9 @@ if options.iprof:
 
 if options.disassemblyfunction:
 
+    reads=0
+    writes=0
+
     disas=[]
     dump=[]
 
@@ -139,14 +140,38 @@ if options.disassemblyfunction:
     #Open dump file
     dump = openFile(options.dumpfile)
 
-    #Clean empty line
+    #Clean empty linea
     dump = list(filter(None,dump))
     #Delete first 2 lines
     dump = dump[2:]
 
     disas_func = Function().disassembly(dump, disas)
 
-    print(disas_func)
+    for func in disas_func:
+
+        reg = Register(disas_func[func], 'riscv')
+
+        reads,writes = reg.readwrite()
+
+        registers = reg.list()
+
+        registers = "".join(registers)
+
+        numregister = reg.reg_num
+
+        disas = Instruction(disas_func[func], 'riscv')
+
+        classifier = disas.arch_AUCD
+
+        classification = disas.profile(classifier)
+
+        classification = " ".join([str(x) for x in classification])
+
+        print("Function: "+str(func))
+        print("Registers: "+str(registers))
+        print("Number of registers: "+str(numregister))
+        print("Profile: "+str(classification))
+
 
 if options.plotinstructionsprofile:
 
