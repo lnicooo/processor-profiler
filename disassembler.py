@@ -26,19 +26,29 @@ for line_dump in dump:
 
 disas_func={}
 
+
 for line in disas:
     for func in func_addr:
+
         addr= hex(int(line[0]))[2:]
         if(addr in func_addr[func]):
             break
 
     func = func[1:-2]
+
     if(func not in disas_func):
         disas_func[func]=[]
-        disas_func[func].append(line[2:])
-    else:
-        disas_func[func].append(line[2:])
+
+
+    disas_func[func].append(line)
+
+
     print(line,func)
 
+print(len(func_addr))
+print(len(disas_func))
+
 print("===============")
-print(disas_func['_start'])
+print(disas_func['__call_exitprocs'])
+
+print(disas_func['__retarget_lock_init'])

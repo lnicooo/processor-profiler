@@ -109,13 +109,13 @@ class Register():
 
             #append the rest to the write list
             if(len(regs_found)>2):
-                reg_read.extend(register[1:])
+                reg_read.extend(regs_found[1:])
 
         num_regs = len(reg_write)
 
         writes=list(Counter(reg_write).items())
 
-        self.writes_usage = [(x[1]/num_reg)*100 for x in writes]
+        self.writes_usage = [(x[1]/num_regs)*100 for x in writes]
 
         writes=[str(x[0]) for x in writes]
 
@@ -123,7 +123,7 @@ class Register():
 
         num_regs = len(reg_read)
 
-        self.reads_usage = [(x[1]/num_reg)*100 for x in reads]
+        self.reads_usage = [(x[1]/num_regs)*100 for x in reads]
 
         reads=[str(x[0]) for x in reads]
 
@@ -146,7 +146,7 @@ class Register():
 
         num_reg = sum([x[1] for x in regs_hist])
 
-        self.reg_num = num_reg
+        self.reg_num = len(regs_hist)
 
         self.reg_usage = [(x[1]/num_reg)*100 for x in regs_hist]
 
@@ -171,17 +171,22 @@ class Function():
                 func_addr[func].append(line[0][:-1])
 
         for line in disas:
+            addr = hex(int(line[0]))[2:]
             for func in func_addr:
-                addr= hex(int(line[0]))[2:]
+
+                func_name = func[1:-2]
+                if(func_name not in disas_func):
+                    func_pop = func_name
+                    disas_func[func_name]=[]
+
                 if(addr in func_addr[func]):
+                    disas_func[func_name].append(line)
                     break
 
-                func = func[1:-2]
-                if(func not in disas_func):
-                    disas_func[func]=[]
-                    disas_func[func].append(line[2:])
-                else:
-                    disas_func[func].append(line[2:])
+        empty_keys = [func for func in disas_func if disas_func[func]==[]]
+
+        for key in empty_keys:
+            disas_func.pop(key)
 
         return disas_func
 

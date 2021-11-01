@@ -155,7 +155,7 @@ if options.disassemblyfunction:
 
         registers = reg.list()
 
-        registers = "".join(registers)
+        registers = " ".join(registers)
 
         numregister = reg.reg_num
 
