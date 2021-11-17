@@ -19,9 +19,8 @@ parser.add_option("--rw",               action="store_true", dest="readswrites",
 parser.add_option("--disassemblyfunc",  action="store_true", dest="disassemblyfunction",    help="Generate csv from iprof")
 parser.add_option("--iprof",            action="store_true", dest="iprof",                  help="List executing function")
 
-
 parser.add_option("--disassemblyfile",  action="append", type="string", dest="disassemblyfile")
-parser.add_option("--dumpfile",         action="store", type="string", dest="dumpfile")
+parser.add_option("--dumpfile",         action="store",  type="string", dest="dumpfile")
 
 parser.add_option("--classifier"  ,     action="store", type="string", dest="classifier")
 parser.add_option("--outputfile",       action="store", type="string", dest="outputfile")
@@ -35,7 +34,10 @@ classAUCD = ['Arithmetic','Unconditional','Conditional','Data']
 
 if options.instructionsprofile:
 
-    applications = readFolder(options.disassemblyfolder, "disas")
+    if(options.disassemblyfolder != None):
+        applications = readFolder(options.disassemblyfolder, 'disas')
+    else:
+        applications = options.disassemblyfile
 
     table = open("{0}.csv".format(options.outputfile),'w')
 
@@ -67,7 +69,11 @@ if options.instructionsprofile:
 
 if options.readswrites:
 
-    applications = readFolder(options.disassemblyfolder, 'out')
+    if(options.disassemblyfolder != None):
+        applications = readFolder(options.disassemblyfolder, 'disas')
+    else:
+        applications = options.disassemblyfile
+
     table = open("{0}.csv".format(options.outputfile),'w')
 
     head = "Application, Reads, Writes\n"
@@ -94,7 +100,10 @@ if options.readswrites:
 
 if options.registersprofile:
 
-    applications = readFolder(options.disassemblyfolder, "out")
+    if(options.disassemblyfolder != None):
+        applications = readFolder(options.disassemblyfolder, "disas")
+    else:
+        applications = options.disassemblyfile
 
     table = open("{0}.csv".format(options.outputfile),"w")
 
@@ -106,7 +115,9 @@ if options.registersprofile:
 
         applicationName =  application.split('/')[1][:-4]
 
-        reg = Register(application, 'riscv')
+        disas_f = openFile(application)
+
+        reg = Register(disas_f, 'riscv')
 
         registers = reg.list()
 
@@ -120,7 +131,11 @@ if options.iprof:
 
     df = pd.DataFrame()
 
-    df = Function.iprof(options.iproffile)
+    iprof_f = openFile(options.iproffile)
+
+    df = Function().iprof(iprof_f)
+
+    options.outputfile = options.outputfile+".csv"
 
     df.to_csv(options.outputfile)
 
@@ -133,6 +148,15 @@ if options.disassemblyfunction:
     dump=[]
 
     disas_func={}
+
+    table = open("{0}.csv".format(options.outputfile),'w')
+
+    if(options.classifier == "AUCD"):
+        head=",".join(classAUCD)
+
+    head="Function,Registers,NºRegisters,"+head+"Reads,Writes\n"
+
+    table.write(head)
 
     #Open disasembly file
     disas = openFile(options.disassemblyfile[0])
@@ -148,16 +172,27 @@ if options.disassemblyfunction:
     disas_func = Function().disassembly(dump, disas)
 
     for func in disas_func:
+        funcprofile=[]
+        funcprofile.append(func)
 
         reg = Register(disas_func[func], 'riscv')
 
         reads,writes = reg.readwrite()
 
+        reads = " ".join(reads)
+        funcprofile.append(reads)
+        writes = " ".join(writes)
+        funcprofile.append(writes)
+
         registers = reg.list()
 
         registers = " ".join(registers)
 
+        funcprofile.append(registers)
+
         numregister = reg.reg_num
+
+        funcprofile.append(str(numregister))
 
         disas = Instruction(disas_func[func], 'riscv')
 
@@ -165,13 +200,15 @@ if options.disassemblyfunction:
 
         classification = disas.profile(classifier)
 
-        classification = " ".join([str(x) for x in classification])
+        classification = ",".join([str(x) for x in classification])
 
-        print("Function: "+str(func))
-        print("Registers: "+str(registers))
-        print("Number of registers: "+str(numregister))
-        print("Profile: "+str(classification))
+        funcprofile.append(classification)
 
+        funcprofile = ",".join(funcprofile)
+
+        funcprofile += "\n"
+
+        table.write(funcprofile)
 
 if options.plotinstructionsprofile:
 

@@ -16,24 +16,34 @@ mkdir -p ${report}
 mkdir -p ${report}/$1
 mkdir -p ${report}/$1/disassembly
 
+disasfile=${report}/$1/${application}.disas
+dumpfile=${report}/$1/${application}.dump
+outfile=${report}/$1/${application}
+
 echo -e "\e[1;32m ********************************* \e[0m"
 echo -e "\e[1;32m Running: ${application} \e[0m"
 echo -e "\e[1;32m ********************************* \e[0m"
 
-make -C test-app CROSS=${CROSS}
+make -C ${application} CROSS=${CROSS}
+
+mv ${application}/*.dump ${dumpfile}
 
 harness/harness.${IMPERAS_ARCH}.exe \
---program test-app/app.${CROSS}.elf \
---appdisassembly ${report}/$1/disassembly/${application}.disas \
+--program ${application}/app.${CROSS}.elf \
+--appdisassembly ${disasfile} \
 --enabletools \
---callcommand "top/u1/cpu1/vapTools/functionprofile -dotfile ${report}/$1/${application}.dot -sampleinterval 1  -filename ${report}/$1/${application}.iprof"
+--callcommand "top/u1/cpu1/vapTools/functionprofile -dotfile ${outfile}.dot -sampleinterval 1  -filename ${outfile}.iprof"
 
-#awk -f funcs.awk app.out | sort -nk2 -r > ${application}.out
-python classification.py --functionprofile --iprof ${report}/$1/${application}.iprof --outputfile ${report}/$1/${application}_func
+python classification.py --iprof --iproffile ${outfile}.iprof --outputfile ${outfile}_func
 
-python classification.py --rw --disassemblyfolder ${report}/$1/disassembly --outputfile ${report}/$1/${application}_rw
+python classification.py --rw --disassemblyfile ${disasfile} --outputfile ${outfile}_rw
 
-python classification.py --instructions --classifier AUCD --disassemblyfolder  ${report}/$1/disassembly --outputfile ${report}/$1/${application}_instr
+python classification.py --registers --disassemblyfile ${disasfile} --outputfile ${outfile}_reg
+
+python classification.py --instructions --classifier AUCD --disassemblyfile ${disasfile} --outputfile ${outfile}_instr
+
+python classification.py --disassemblyfunc --classifier AUCD --disassemblyfile ${disasfile} --dumpfile ${dumpfile} --outputfile ${outfile}_func_disas
+
 
 echo -e "\e[1;32m ********************************* \e[0m"
 echo -e "\e[1;32m Done: ${application} \e[0m"

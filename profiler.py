@@ -132,6 +132,7 @@ class Register():
     def list(self):
 
         regs_hist=[]
+
         #returns a list of the most used registers
         for reg in self.registers:
             regs_found=[]
@@ -139,7 +140,7 @@ class Register():
             #filter RISC-V registers
             regs_found=re.findall("[tsa]\d[0-1]*|ra|[sgt][p]", reg)
 
-            if(len(regs_found)>1):
+            if(len(regs_found)>=1):
                 regs_hist.extend(regs_found)
 
         regs_hist=list(Counter(regs_hist).items())
@@ -151,6 +152,7 @@ class Register():
         self.reg_usage = [(x[1]/num_reg)*100 for x in regs_hist]
 
         regs_hist=[str(x[0]) for x in regs_hist]
+
 
         return regs_hist
 
@@ -199,6 +201,9 @@ class Function():
 
 
         for line in iprof:
+
+            line = " ".join(line)
+
             m_a=a.match(line)
             m_b=b.match(line)
 
