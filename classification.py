@@ -154,7 +154,7 @@ if options.disassemblyfunction:
     if(options.classifier == "AUCD"):
         head=",".join(classAUCD)
 
-    head="Function,Registers,NºRegisters,"+head+"Reads,Writes\n"
+    head="Function,Reads,Writes,Registers,NºRegisters,"+head+"\n"
 
     table.write(head)
 

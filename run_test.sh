@@ -8,7 +8,7 @@ checkinstall.exe -p install.pkg --nobanner || exit
 
 CROSS=RISCV32
 
-application=test-app
+application=build
 
 report=report-test
 
