@@ -149,12 +149,14 @@ if options.disassemblyfunction:
 
     disas_func={}
 
+    df_iprof = pd.DataFrame()
+
     table = open("{0}.csv".format(options.outputfile),'w')
 
     if(options.classifier == "AUCD"):
         head=",".join(classAUCD)
 
-    head="Function,Reads,Writes,Registers,NºRegisters,"+head+"\n"
+    head="Function,Reads,Writes,Reads %,Writes %,Registers,NºRegisters,"+head+",Calls,Usage\n"
 
     table.write(head)
 
@@ -164,12 +166,16 @@ if options.disassemblyfunction:
     #Open dump file
     dump = openFile(options.dumpfile)
 
+    #Open iprof file
+    iprof = openFile(options.iproffile)
+
     #Clean empty linea
     dump = list(filter(None,dump))
     #Delete first 2 lines
     dump = dump[2:]
 
     disas_func = Function().disassembly(dump, disas)
+    df_iprof = Function().iprof(iprof)
 
     for func in disas_func:
         funcprofile=[]
@@ -183,6 +189,9 @@ if options.disassemblyfunction:
         funcprofile.append(reads)
         writes = " ".join(writes)
         funcprofile.append(writes)
+
+        funcprofile.append(str(reg.reads_perc))
+        funcprofile.append(str(reg.writes_perc))
 
         registers = reg.list()
 
@@ -203,6 +212,17 @@ if options.disassemblyfunction:
         classification = ",".join([str(x) for x in classification])
 
         funcprofile.append(classification)
+
+
+        iprof_func = df_iprof.loc[df_iprof['func']==func,['samp','perc']]
+
+        if(len(iprof_func)>0):
+            iprof_func = iprof_func.values.tolist()[0]
+
+            iprof_func = [str(x) for x in iprof_func]
+
+            funcprofile.extend(iprof_func)
+
 
         funcprofile = ",".join(funcprofile)
 

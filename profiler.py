@@ -87,6 +87,8 @@ class Register():
         self.reads_usage  = 0
         self.reg_usage    = 0
         self.reg_num      = 0
+        self.reads_perc   = 0
+        self.writes_perc  = 0
 
         if(arch == 'riscv'):
             self.arch_registers = ["ra","sp","gp","tp","t0","t1","t2","s0","s1","a0","a1","a2","a3","a4","a5","a6","a7","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","t5","t6","pc"]
@@ -108,7 +110,7 @@ class Register():
                 reg_write.append(regs_found[0])
 
             #append the rest to the write list
-            if(len(regs_found)>2):
+            if(len(regs_found)>=2):
                 reg_read.extend(regs_found[1:])
 
         num_regs = len(reg_write)
@@ -119,6 +121,8 @@ class Register():
 
         writes=[str(x[0]) for x in writes]
 
+        writes_tot = sum(Counter(reg_write).values())
+
         reads=list(Counter(reg_read).items())
 
         num_regs = len(reg_read)
@@ -126,6 +130,16 @@ class Register():
         self.reads_usage = [(x[1]/num_regs)*100 for x in reads]
 
         reads=[str(x[0]) for x in reads]
+
+        reads_tot = sum(Counter(reg_read).values())
+
+        regs_tot = reads_tot + writes_tot
+
+        if(writes_tot>0):
+            self.writes_perc = (writes_tot/regs_tot)*100
+
+        if(reads_tot>0):
+            self.reads_perc = (reads_tot/regs_tot)*100
 
         return reads,writes
 
