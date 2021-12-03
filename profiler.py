@@ -60,6 +60,8 @@ class Instruction():
         #
         read=0
         write=0
+        reads=0
+        writes=0
 
         instr_hist=list(Counter(self.instr).items())
 
@@ -72,9 +74,10 @@ class Instruction():
 
         #instr_sum = sum([x[1] for x in instr_hist])
         rw_sum = read+write
-
-        reads  = str((read/rw_sum)*100)
-        writes = str((write/rw_sum)*100)
+        if(read>0):
+            reads  = (read/rw_sum)*100
+        if(write>0):
+            writes = (write/rw_sum)*100
 
         return reads, writes
 

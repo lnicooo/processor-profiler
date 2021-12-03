@@ -156,12 +156,14 @@ if options.disassemblyfunction:
     if(options.classifier == "AUCD"):
         head=",".join(classAUCD)
 
-    head="Function,Reads,Writes,Reads %,Writes %,Registers,NºRegisters,"+head+",Calls,Usage\n"
+    head="Function,Instructions,Reads,Writes,Registers,Reads %,Writes %,NºRegisters,"+head+",Instr_Reads %,Instr_Writes %,Usage%\n"
 
     table.write(head)
 
     #Open disasembly file
     disas = openFile(options.disassemblyfile[0])
+
+    exe_instr = len(disas)
 
     #Open dump file
     dump = openFile(options.dumpfile)
@@ -181,6 +183,10 @@ if options.disassemblyfunction:
         funcprofile=[]
         funcprofile.append(func)
 
+        instr_func = len(disas_func[func])
+
+        funcprofile.append(str(instr_func))
+
         reg = Register(disas_func[func], 'riscv')
 
         reads,writes = reg.readwrite()
@@ -190,14 +196,14 @@ if options.disassemblyfunction:
         writes = " ".join(writes)
         funcprofile.append(writes)
 
-        funcprofile.append(str(reg.reads_perc))
-        funcprofile.append(str(reg.writes_perc))
-
         registers = reg.list()
 
         registers = " ".join(registers)
 
         funcprofile.append(registers)
+
+        funcprofile.append(str(reg.reads_perc))
+        funcprofile.append(str(reg.writes_perc))
 
         numregister = reg.reg_num
 
@@ -213,16 +219,15 @@ if options.disassemblyfunction:
 
         funcprofile.append(classification)
 
+        instr_r,instr_w = disas.readwrite()
 
-        iprof_func = df_iprof.loc[df_iprof['func']==func,['samp','perc']]
+        funcprofile.append(str(instr_r))
 
-        if(len(iprof_func)>0):
-            iprof_func = iprof_func.values.tolist()[0]
+        funcprofile.append(str(instr_w))
 
-            iprof_func = [str(x) for x in iprof_func]
+        exe_perc = (instr_func/exe_instr)*100
 
-            funcprofile.extend(iprof_func)
-
+        funcprofile.append(str(exe_perc))
 
         funcprofile = ",".join(funcprofile)
 
