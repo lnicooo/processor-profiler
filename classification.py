@@ -169,7 +169,7 @@ if options.disassemblyfunction:
     dump = openFile(options.dumpfile)
 
     #Open iprof file
-    iprof = openFile(options.iproffile)
+    #iprof = openFile(options.iproffile)
 
     #Clean empty linea
     dump = list(filter(None,dump))
@@ -177,7 +177,7 @@ if options.disassemblyfunction:
     dump = dump[2:]
 
     disas_func = Function().disassembly(dump, disas)
-    df_iprof = Function().iprof(iprof)
+    #df_iprof = Function().iprof(iprof)
 
     for func in disas_func:
         funcprofile=[]
@@ -243,22 +243,26 @@ if options.plotinstructionsprofile:
 
     if(options.classifier == "AUCD"):
 
-        classificator = AUCD
+        classificator = "AUCD"
         classifier = classAUCD
+    application = options.disassemblyfile[0]
+    #for application in options.disassemblyfile:
 
-    for application in options.disassemblyfile:
+    #instr = Instruction(application,'riscv')
 
-        instr = Instruction(application,'riscv')
+    #classifier = Instruction.classAUCD
 
-        classifier = Instruction.classAUCD
+    #classification = instr.profile(classifier)
+    #classification = instructionsProfile(application, classificator)
 
-        classification = instr.profile(classifier)
-
-        classification = instructionsProfile(application, classificator)
-
-        classification = [(x/sum(classification))*100 for x in classification]
-
-        values.append(classification)
+    disas_f = openFile(application)
+    disas = Instruction(disas_f,'riscv')
+    classifier = disas.arch_AUCD
+    classification = disas.profile(disas.arch_AUCD)
+    print(classification)
+    #classification = [(x/sum(classification))*100 for x in classification]
+    #print(classification)
+    values.append(classification)
 
     makeSpider(classifier, values, "Hello")
 

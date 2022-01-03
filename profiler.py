@@ -74,10 +74,11 @@ class Instruction():
 
         #instr_sum = sum([x[1] for x in instr_hist])
         rw_sum = read+write
+
         if(read>0):
-            reads  = (read/rw_sum)*100
+            reads  = str((read/rw_sum)*100)
         if(write>0):
-            writes = (write/rw_sum)*100
+            writes = str((write/rw_sum)*100)
 
         return reads, writes
 
@@ -99,17 +100,19 @@ class Register():
 
     def readwrite(self):
 
+        reads=0
+        writes=0
+
         reg_read=[]
         reg_write=[]
         for reg in self.registers:
 
             regs_found=[]
-
             #filter RISC-V registers
-            regs_found=re.findall("[tsa]\d[0-1]*|ra|[sgt][p]", reg)
+            regs_found=re.findall("s10|s11|ra|[tsa]\d|[sgt][p]", reg)
 
             #append fist register to read list
-            if(len(regs_found)>1):
+            if(len(regs_found)>=1):
                 reg_write.append(regs_found[0])
 
             #append the rest to the write list
@@ -125,6 +128,9 @@ class Register():
         writes=[str(x[0]) for x in writes]
 
         writes_tot = sum(Counter(reg_write).values())
+        if(writes_tot>0):
+            self.writes_perc = (writes_tot/num_regs)*100
+
 
         reads=list(Counter(reg_read).items())
 
@@ -136,14 +142,13 @@ class Register():
 
         reads_tot = sum(Counter(reg_read).values())
 
-        regs_tot = reads_tot + writes_tot
+        num_regs = writes_tot + reads_tot
 
         if(writes_tot>0):
-            self.writes_perc = (writes_tot/regs_tot)*100
-
+            self.writes_perc = (writes_tot/num_regs)*100
         if(reads_tot>0):
-            self.reads_perc = (reads_tot/regs_tot)*100
-
+            self.reads_perc = (reads_tot/num_regs)*100
+            
         return reads,writes
 
     def list(self):
@@ -189,7 +194,7 @@ class Function():
             else:
                 func_addr[func].append(line[0][:-1])
 
-        for line in disas:
+        for i,line in enumerate(disas):
             addr = hex(int(line[0]))[2:]
             for func in func_addr:
 
@@ -199,6 +204,8 @@ class Function():
                     disas_func[func_name]=[]
 
                 if(addr in func_addr[func]):
+                    #line.append(i)
+
                     disas_func[func_name].append(line)
                     break
 

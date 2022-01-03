@@ -4,16 +4,16 @@ endif
 IMPERAS_HOME := $(shell getpath.exe "$(IMPERAS_HOME)")
 include $(IMPERAS_HOME)/bin/Makefile.include
 
-CROSS?=RISCV32
+CROSS?=
+OPTIMIZATION?=
 
 -include $(IMPERAS_HOME)/lib/$(IMPERAS_ARCH)/CrossCompiler/$(CROSS).makefile.include
 ifeq ($($(CROSS)_CC),)
     IMPERAS_ERROR := $(error "Please install the toolchain to support $(CROSS) ")
 endif
 
-OPTIMISATION?=-O2
-PROF_LD?=-lgcov --coverage
-PROF_CC?=-fprofile-arcs -ftest-coverage
+PROF_LD?=$(LFLAGS_MAKE)
+PROF_CC?=$(CFLAGS_MAKE)
 
 SRC = $(sort $(wildcard *.c))
 EXE = $(patsubst %.c,%.$(CROSS).elf,$(SRC))
@@ -30,11 +30,11 @@ all: $(EXE) $(DUMP)
 	$(V)  $(IMPERAS_LINK) -o $@ $< $(IMPERAS_LDFLAGS) -lm
 
 %.$(CROSS).o: %.c
-	$(V)  echo "# Compiling $<"
-	$(V)  $(IMPERAS_CC) -c -o $@ $< $(OPTIMISATION)
+	$(V)  echo "# Compiling $< "
+	$(V)  $(IMPERAS_CC) -c -o $@ $< $(OPTIMIZATION)
 
 clean:
-	-rm -f *.elf *.o 
+	-rm -f *.elf *.o
 
 realclean: clean
 	-rm -f *.log
