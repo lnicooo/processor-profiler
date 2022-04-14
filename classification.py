@@ -30,7 +30,7 @@ parser.add_option("--iproffile",        action="store", type="string", dest="ipr
 # parse arguments
 (options, args) = parser.parse_args()
 
-classAUCD = ['Arithmetic','Unconditional','Conditional','Data']
+classAUCD = ['Arithmetic','Unconditional','Conditional','Data'] #,'Reads','Writes']
 
 if options.instructionsprofile:
 
@@ -59,9 +59,13 @@ if options.instructionsprofile:
 
         classification = ",".join([str(x) for x in classification])
 
-        applicationName = application.split('/')[1][:-4]
+        readwrite = disas.readwrite()
 
-        applicationProfile = "{0},{1}\n".format(applicationName,classification)
+        readwrite = ",".join(readwrite)
+
+        applicationName = application.split('/')[-1].split('.')[0]
+        print(applicationName)
+        applicationProfile = "{0},{1},{2}\n".format(applicationName,classification,readwrite)
 
         table.write(applicationProfile)
 
@@ -97,7 +101,52 @@ if options.readswrites:
         table.write(applicationRW)
 
     sys.exit()
+if options.registervulnerability:
 
+    if(options.disassemblyfolder != None):
+        applications = readFolder(options.disassemblyfolder, 'disas')
+    else:
+        applications = options.disassemblyfile
+
+    table = open("{0}.csv".format(options.outputfile),'w')
+
+    head = "Application,Tot Instructions,Tot VulnInstr"
+
+    table.write(head)
+
+    for application in applications:
+
+        table1 = open("{0}.csv".format(application),'w')
+
+        head = "Register,VulnInstr"
+
+        table1.write(head)
+
+        disas_f = openFile(application)
+
+        reg = Register(disas_f,'riscv')
+
+        rvf = reg.vulnerability()
+
+        all_reg_sum = 0
+
+        for reg in rvf:
+
+            all_reg_sum += rvf[reg]
+
+            reg_vuln = "{0},{1}\n".format(reg,rvf[reg])
+
+            table1.write(reg_vuln)
+
+        app_info = "{0},{1}\n".format(application, len(disas_f))
+        table1.write(app_info)
+
+        app_info = "{0},{1},{2}\n".format(application,len(disas_f),all_reg_sum)
+        table.write()
+
+
+
+    
 if options.registersprofile:
 
     if(options.disassemblyfolder != None):
@@ -107,24 +156,27 @@ if options.registersprofile:
 
     table = open("{0}.csv".format(options.outputfile),"w")
 
-    head="Application, Nº Registers, Registers\n"
+    head="Application,Nº Registers,Registers,a,s,t,sys\n"
 
     table.write(head)
 
     for application in applications:
 
-        applicationName =  application.split('/')[1][:-4]
-
+        applicationName =  application.split('/')[-1].split('.')[0]
+        print(applicationName)
+        #applicationName = application.split('.')[0]
         disas_f = openFile(application)
 
         reg = Register(disas_f, 'riscv')
 
         registers = reg.list()
-
+        registers = " ".join(registers)
         numregisters = reg.reg_num
+        usage  = ",".join(reg.reg_usage)
 
-        applicationProfile = "{0},{1},{2}\n".format(applicationName,numregisters,registers)
+        print(usage)
 
+        applicationProfile = "{0},{1},{2},{3}\n".format(applicationName,numregisters,registers,usage)
         table.write(applicationProfile)
 
 if options.iprof:

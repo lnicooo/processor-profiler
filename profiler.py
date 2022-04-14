@@ -87,6 +87,7 @@ class Register():
     def __init__(self, data, arch):
         self.registers = [x[3] for x in data if len(x)>3]
 
+        self.data = data
         self.writes_usage = 0
         self.reads_usage  = 0
         self.reg_usage    = 0
@@ -96,7 +97,70 @@ class Register():
 
         if(arch == 'riscv'):
             self.arch_registers = ["ra","sp","gp","tp","t0","t1","t2","s0","s1","a0","a1","a2","a3","a4","a5","a6","a7","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","t3","t4","t5","t6","pc"]
+            self.arch_read_instr = ['beq','bne','beqz','bnez','blt','bltu','bge','bgeu','sw','sh','sb']
+
             self.arch = arch
+    def __maximum(self,max_value,w_table):
+        #find the biggest value from table
+        y=w_table[0]
+        for j in w_table:
+            if(j>=max_value):
+                break
+            y=j
+        return y
+
+    def vulnerability(self):
+        #create empty table
+        rvf_table={}
+        rvf={}
+        for reg in self.arch_registers:
+            rvf_table[reg]=([],[])
+            rvf[reg]=0
+
+        for x in range(len(self.data)):
+            curr_line = self.data[x]
+            #print(str(x)+" "+str(j))
+            if(len(curr_line)>3):
+                regs = curr_line[3]
+                instr = curr_line[2]
+                regs_found = re.findall("s10|s11|re|t[0-2]|a[0-7]|s[0-9]|[sgt][p]", regs)
+                if(instr in self.arch_read_instr):
+                    #consider all regsiter as read
+                    for reg in regs_found:
+                        rvf_table[reg][0].append(x)
+                else:
+                    if(len(regs_found)>=1):
+                        #write
+                        rvf_table[regs_found[0]][1].append(x)
+                    if(len(regs_found)>=2):
+                        #read
+                        for reg in regs_found[1:]:
+                            rvf_table[reg][0].append(x)
+
+        #finds the times register was vulnerable
+        for reg in self.arch_registers:
+            print(reg)
+            writes=rvf_table[reg][1].copy()
+            reads=rvf_table[reg][0].copy()
+            regs_vuln={}
+            if(len(writes)>0):
+
+                for read_x in reads:
+                    max_value=self.__maximum(read_x,writes)
+
+                    if(max_value!=writes[0]):
+                        #breaks the array for unused values
+                        writes=writes[writes.index(max_value):]
+
+                    regs_vuln[max_value]=read_x
+
+            #calculate how many instructions that the register was vulnerable
+            for x in regs_vuln:
+                rvf[reg]+=regs_vuln[x]-x
+            print(rvf[reg])
+
+        return rvf
+
 
     def readwrite(self):
 
@@ -131,7 +195,6 @@ class Register():
         if(writes_tot>0):
             self.writes_perc = (writes_tot/num_regs)*100
 
-
         reads=list(Counter(reg_read).items())
 
         num_regs = len(reg_read)
@@ -160,21 +223,38 @@ class Register():
             regs_found=[]
 
             #filter RISC-V registers
-            regs_found=re.findall("[tsa]\d[0-1]*|ra|[sgt][p]", reg)
+            regs_found=re.findall("s10|s11|re|t[0-2]|a[0-7]|s[0-9]|[sgt][p]", reg)
 
             if(len(regs_found)>=1):
                 regs_hist.extend(regs_found)
 
         regs_hist=list(Counter(regs_hist).items())
 
+        regs_hist=sorted(regs_hist,key=lambda x:x[1],reverse=True)
+
         num_reg = sum([x[1] for x in regs_hist])
 
         self.reg_num = len(regs_hist)
 
-        self.reg_usage = [(x[1]/num_reg)*100 for x in regs_hist]
+        #self.reg_usage = [(x[1]/num_reg)*100 for x in regs_hist]
+
+        regs_class = (['a0','a1','a2','a3','a4','a5','a6','a7'],['s1','s2','s3','s4','s5','s6','s7','s8','s9','s10','s11'],['t0','t1','t2','t3','t4','t5','t6'],['ra','sp','s0','gp','tp','pc'])
+
+        x=[]
+
+        for regs_c in regs_class:
+            b=[]
+            for i in regs_hist:
+                if(i[0] in regs_c):
+                    b.append(i[1])
+
+            x.append(sum(b))
+
+        self.reg_usage = [str((l/sum(x))*100) for l in x]
+
+        #self.reg_usage = regs_hist
 
         regs_hist=[str(x[0]) for x in regs_hist]
-
 
         return regs_hist
 
@@ -193,6 +273,8 @@ class Function():
                 func_addr[func]=[]
             else:
                 func_addr[func].append(line[0][:-1])
+
+        #print(func_addr['<mac>:'])
 
         for i,line in enumerate(disas):
             addr = hex(int(line[0]))[2:]
