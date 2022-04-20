@@ -230,6 +230,8 @@ class Register():
 
         regs_hist=list(Counter(regs_hist).items())
 
+        self.reg_usage = regs_hist
+
         regs_hist=sorted(regs_hist,key=lambda x:x[1],reverse=True)
 
         num_reg = sum([x[1] for x in regs_hist])
@@ -250,7 +252,7 @@ class Register():
 
             x.append(sum(b))
 
-        self.reg_usage = [str((l/sum(x))*100) for l in x]
+        #self.reg_usage = [str((l/sum(x))*100) for l in x]
 
         #self.reg_usage = regs_hist
 

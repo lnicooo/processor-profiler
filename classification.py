@@ -18,6 +18,7 @@ parser.add_option("--registers",        action="store_true", dest="registersprof
 parser.add_option("--rw",               action="store_true", dest="readswrites",            help="print registers")
 parser.add_option("--disassemblyfunc",  action="store_true", dest="disassemblyfunction",    help="Generate csv from iprof")
 parser.add_option("--iprof",            action="store_true", dest="iprof",                  help="List executing function")
+parser.add_option("--rvf",              action="store_true", dest="registervulnerability",  help="ionfdsniodfsino")
 
 parser.add_option("--disassemblyfile",  action="append", type="string", dest="disassemblyfile")
 parser.add_option("--dumpfile",         action="store",  type="string", dest="dumpfile")
@@ -101,6 +102,7 @@ if options.readswrites:
         table.write(applicationRW)
 
     sys.exit()
+
 if options.registervulnerability:
 
     if(options.disassemblyfolder != None):
@@ -116,7 +118,11 @@ if options.registervulnerability:
 
     for application in applications:
 
-        table1 = open("{0}.csv".format(application),'w')
+        applicationName =  application.split('/')[-1].split('.')[0]
+
+        applicationName += "_regs"
+
+        table1 = open("{0}.csv".format(applicationName),'w')
 
         head = "Register,VulnInstr"
 
@@ -138,14 +144,11 @@ if options.registervulnerability:
 
             table1.write(reg_vuln)
 
-        app_info = "{0},{1}\n".format(application, len(disas_f))
+        app_info = "{0},{1}\n".format(applicationName, len(disas_f))
         table1.write(app_info)
 
-        app_info = "{0},{1},{2}\n".format(application,len(disas_f),all_reg_sum)
-        table.write()
-
-
-
+        app_info = "{0},{1},{2}\n".format(applicationName,len(disas_f),all_reg_sum)
+        table.write(app_info)
     
 if options.registersprofile:
 
